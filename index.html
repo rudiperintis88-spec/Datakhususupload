@@ -1233,6 +1233,74 @@
   const DIVISI = 'Flamboyan';
   const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8rWnYng7TGqvAMl7aryX7yZE7hQnzwF3Urqwu1t8bPq9AFJBXPfqaGmUzTk08Nw91e6mQGV6kbc2J/pub?gid=860325626&single=true&output=csv';
 
+  /* ===== Sheet "Data PerFaktur": Tgl Buat Tagihan & Tgl Barcode dibaca per Faktur No. (bukan dari kolom O/P Sheet1) ===== */
+  const PERFAKTUR_SHEETS = ['Data Per Faktur', 'Data PerFaktur'];
+  const PERFAKTUR_FILE_ID = '1ul2WqwEb4X66Q6CYdycNvtyaLu08axFkZL75FI-qdmM';
+  const PERFAKTUR_PUB_GID = ''; // opsional: isi angka gid sheet "Data PerFaktur" (dari alamat #gid=...) bila file Google Sheet tidak dibagikan "Siapa saja yang memiliki link" tetapi sudah di-publish ke web
+  /* ===== Sheet "Data": Type, Divisi, Cara Pembelian, Leasing, Salesman, Supervisor dicocokkan per Faktur No. (bukan dari Sheet1) ===== */
+  let dsLast = null;
+  function dsDivisi(r) { let d = String(r[9] == null ? '' : r[9]).trim(); if (!d) { const raw = String(r[8] == null ? '' : r[8]).trim(); if (raw) d = raw.replace(/\s+mobil$/i, ''); } return d; }
+  function dsTxt(v) { return pfClean(v); }
+  function buildDataLookup(rows) {
+    let h = -1;
+    for (let i = 0; i < rows.length && i < 40; i++) { const r = rows[i]; if (r && String(r[0]).trim() === 'No' && String(r[1]).trim() === 'Tanggal') { h = i; break; } }
+    if (h < 0) return null;
+    const map = {}; let n = 0;
+    for (let i = h + 1; i < rows.length; i++) {
+      const r = rows[i], k = pfKey(r && r[2]);
+      if (!k) continue;
+      map[k] = { type: dsTxt(r[5]), cara: dsTxt(r[7]), divisi: dsDivisi(r), leasing: dsTxt(r[10]), sales: dsTxt(r[11]), spv: dsTxt(r[12]) };
+      n++;
+    }
+    return n ? map : null;
+  }
+  async function fetchDataLookup() {
+    try { const m = buildDataLookup(await pfFetchRows(typeof SALES_CSV_URL === 'string' ? SALES_CSV_URL : PUBLISHED_CSV_URL.replace(/gid=\d+/, 'gid=0'))); if (m) { dsLast = m; return m; } }
+    catch (e) { console.warn('Sheet Data belum terbaca:', e); }
+    return dsLast;
+  }
+  let pfLast = null;
+  function pfKey(v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toUpperCase(); }
+  function pfClean(v) { v = String(v == null ? '' : v).trim(); return /^#(N\/A|REF!|VALUE!|NAME\?|DIV\/0!|NULL!|NUM!|ERROR!)/i.test(v) || /^\\?-+$/.test(v) ? '' : v; }
+  function buildPerFaktur(rows) {
+    for (let i = 0; i < rows.length && i < 15; i++) {
+      const r = rows[i] || [];
+      const hs = r.map(c => String(c == null ? '' : c).toLowerCase().replace(/\s+/g, ' ').trim());
+      let f = -1, t = -1, b = -1;
+      hs.forEach((s, j) => { if (f < 0 && /faktur/.test(s) && !/tgl|tanggal/.test(s)) f = j; });
+      hs.forEach((s, j) => { if (t < 0 && /tagihan/.test(s) && /tgl|tanggal|buat/.test(s)) t = j; });
+      if (t < 0) hs.forEach((s, j) => { if (t < 0 && /tagihan/.test(s)) t = j; });
+      hs.forEach((s, j) => { if (b < 0 && /bar(c|k)ode/.test(s.replace(/[^a-z]/g, '')) && /tgl|tanggal/.test(s)) b = j; });
+      if (b < 0) hs.forEach((s, j) => { if (b < 0 && /bar(c|k)ode/.test(s.replace(/[^a-z]/g, ''))) b = j; });
+      if (f < 0 || (t < 0 && b < 0)) continue;
+      const map = {}; let n = 0;
+      for (let k = i + 1; k < rows.length; k++) {
+        const row = rows[k], key = pfKey(row && row[f]);
+        if (!key) continue;
+        map[key] = { tagih: t > -1 ? pfClean(row[t]) : '', barcode: b > -1 ? pfClean(row[b]) : '' };
+        n++;
+      }
+      return n ? map : null;
+    }
+    return null;
+  }
+  async function pfFetchRows(url) {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const t = await res.text();
+    if (/^\s*</.test(t)) throw new Error('bukan CSV');
+    return parseCSVFull(t.replace(/^\uFEFF/, ''));
+  }
+  async function fetchPerFaktur() {
+    const urls = PERFAKTUR_SHEETS.map(n => 'https://docs.google.com/spreadsheets/d/' + PERFAKTUR_FILE_ID + '/gviz/tq?tqx=out:csv&headers=0&sheet=' + encodeURIComponent(n));
+    if (PERFAKTUR_PUB_GID) urls.push(PUBLISHED_CSV_URL.split('?')[0] + '?gid=' + PERFAKTUR_PUB_GID + '&single=true&output=csv');
+    for (const u of urls) {
+      try { const m = buildPerFaktur(await pfFetchRows(u)); if (m) { pfLast = m; return m; } }
+      catch (e) { console.warn('Data PerFaktur belum terbaca:', e); }
+    }
+    return pfLast; // gagal: pakai data terakhir yang berhasil; bila belum pernah berhasil -> null (cadangan: kolom O/P Sheet1)
+  }
+
   /* dibuka oleh gate password dashboard */
   let started = false;
   window.__bootFu = function () { if (!started) { started = true; start(); } };
@@ -1326,13 +1394,13 @@
   // Umur piutang (hari) dihitung otomatis: hari ini dikurangi Tgl JTO. Kolom Hari di sheet hanya dipakai bila Tgl JTO tidak terbaca.
   function hariDariJto(jtoStr, fallbackRaw, fmt) {
     const d = parseTglJto(jtoStr, fmt);
-    if (!d) return cellNum(fallbackRaw);
+    if (!d) return 0; // Tgl.Jto kosong / tidak terbaca -> 0 (kolom Hari di sheet tidak dipakai lagi)
     const t = new Date();
     const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
     return Math.max(0, Math.round((today - d) / 86400000));
   }
 
-  function parseAgingRows(rows) {
+  function parseAgingRows(rows, pf, ds) {
     let headerIdx = -1;
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -1347,22 +1415,24 @@
       const nama = row[2];
       const jumlah = cellNum(row[6]);
       if (!nama || !jumlah) continue;
+      const D = ds ? (ds[pfKey(row[3])] || null) : null; // baris sheet Data (cocok Faktur No.)
       out.push({
         noCust: cellStr(row[1]),
         nama: cellStr(nama),
         faktur: cellStr(row[3]),
-        divisi: cellStr(row[9]),
-        cara: cellStr(row[10]),
-        leasing: cellStr(row[11]),
+        divisi: (D && D.divisi) || cellStr(row[9]),
+        cara: (D && D.cara) || cellStr(row[10]),
+        leasing: D ? D.leasing : cellStr(row[11]),
         jumlah,
         giro: cellStr(row[7]),
-        type: cellStr(row[8]),
+        type: D ? D.type : cellStr(row[8]),
         tglJtoDisplay: cellStr(row[5]),
         hari: hariDariJto(row[5], row[17], jtoFmt),
-        salesman: cellStr(row[12]),
-        supervisor: cellStr(row[13]),
-        tglBuatTagihan: cellStr(row[14]),
-        tglBarcode: cellStr(row[15]),
+        salesman: D ? D.sales : cellStr(row[12]),
+        supervisor: D ? D.spv : cellStr(row[13]),
+        // Tgl Buat Tagihan & Tgl Barcode: dari sheet "Data PerFaktur" (cocok Faktur No.). Cadangan bila sheet itu belum terbaca: kolom O/P Sheet1.
+        tglBuatTagihan: pf ? (((pf[pfKey(row[3])] || {}).tagih) || 'Belum Buat Tagihan') : cellStr(row[14]),
+        tglBarcode: pf ? (((pf[pfKey(row[3])] || {}).barcode) || '') : cellStr(row[15]),
         followup: (row[16] && cellStr(row[16]) !== '#N/A') ? cellStr(row[16]) : '',
       });
     }
@@ -1696,7 +1766,7 @@
       const rows = parseCSVFull(await res.text());
       const perDate = extractPerDate(rows);
       if (perDate) document.getElementById('perDateLabel').textContent = perDate;
-      fuAllRows = parseAgingRows(rows).filter(r => r.divisi === DIVISI);
+      fuAllRows = parseAgingRows(rows, await fetchPerFaktur(), await fetchDataLookup()).filter(r => r.divisi === DIVISI);
       populateLeasingFilter(); populateSupFilter(); renderSummary(); applyFollowupFilters();
       const now = new Date();
       syncStatusEl.innerHTML = `🔄 Live · tersinkron <b>${fmtTglLong(now)}, ${fmtTimeShort(now)}</b> · otomatis tiap 2 menit`;
