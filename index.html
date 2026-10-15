@@ -289,6 +289,8 @@ function render(){
 }
 
 let cur=null;
+const $=id=>document.getElementById(id);
+const m_title=$('m-title'),m_desc=$('m-desc'),m_grp=$('m-grp'),m_pic=$('m-pic'),m_url=$('m-url'),m_open=$('m-open'),m_close=$('m-close'),m_copy=$('m-copy');
 const modal=document.getElementById('modal');
 function openModal(a){
   cur=a;
