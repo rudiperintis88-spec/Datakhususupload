@@ -159,15 +159,15 @@ body.locked .layout{display:none}
 </head>
 <body class="locked">
 <div class="login">
-  <form class="lbox" id="loginForm">
+  <div class="lbox" id="loginForm">
     <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7 6.3 21l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg></div>
     <h1>Perintis Sistem Management</h1>
     <p>Masukkan kata sandi untuk melanjutkan.</p>
     <label for="pw">Kata sandi</label>
-    <input id="pw" type="password" autocomplete="current-password" required>
+    <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div id="loginErr" class="lerr" role="alert"></div>
-    <button class="txt t-red" type="submit">Masuk</button>
-  </form>
+    <button class="txt t-red" type="button" id="loginBtn">Masuk</button>
+  </div>
 </div>
 <div class="layout">
   <aside class="side">
@@ -317,11 +317,12 @@ const PASS="perintispp2026";
 function unlock(){document.body.classList.remove('locked');}
 function lock(){document.body.classList.add('locked');pw.focus();}
 try{if(sessionStorage.getItem('pp_auth')==='1')unlock();}catch(e){}
-loginForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  if(pw.value===PASS){try{sessionStorage.setItem('pp_auth','1');}catch(x){} pw.value='';loginErr.textContent='';unlock();}
+function tryLogin(){
+  if(pw.value.trim().toLowerCase()===PASS){try{sessionStorage.setItem('pp_auth','1');}catch(x){} pw.value='';loginErr.textContent='';unlock();}
   else{loginErr.textContent='Kata sandi salah. Coba lagi.';pw.select();}
-});
+}
+loginBtn.addEventListener('click',tryLogin);
+pw.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tryLogin();}});
 logout.addEventListener('click',()=>{try{sessionStorage.removeItem('pp_auth');}catch(x){} lock();});
 render();
 </script>
