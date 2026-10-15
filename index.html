@@ -155,16 +155,35 @@ body.locked .layout{display:none}
   .tools{width:100%}
 }
 @media (prefers-reduced-motion:no-preference){ .btn,.nav{transition:filter .15s,background .15s} }
+/* tampilan terang */
+.lbox .lname{text-align:center;font-size:36px;margin:0 0 20px}
+.sr{position:absolute;left:-9999px}
+.side{background:#fff;color:#16161a;border-right:1px solid var(--line)}
+.brand{border-bottom-color:var(--line)}
+.brand small,.group-label,.side-foot{color:#8a8a92}
+.side-foot{border-top-color:var(--line)}
+.side-foot b{color:#3a3a42}
+.logo{box-shadow:none}
+.nav{color:#2a2a30}
+.nav:hover{background:#f3f2ef}
+.nav.active{background:#fde8ea;color:#c4121f;box-shadow:none}
+.nav .count{background:#f0efec;color:#6b6b72}
+.nav.active .count{background:#fff;color:#c4121f}
+.stat{color:#16161a;border:1px solid var(--line)}
+.stat .ic{background:#fff}
+.s-red{background:#fde8ea}.s-red .ic{color:#c4121f}
+.s-ink{background:#ececf0}.s-ink .ic{color:#2b2a32}
+.s-green{background:#dff3e8}.s-green .ic{color:#137a43}
+.s-amber{background:#fdf0d8}.s-amber .ic{color:#a35f08}
+.stat small{opacity:.7}
 </style>
 </head>
 <body class="locked">
 <div class="login">
   <div class="lbox" id="loginForm">
-    <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7 6.3 21l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg></div>
-    <h1>Perintis Sistem Management</h1>
-    <p>Masukkan kata sandi untuk melanjutkan.</p>
-    <label for="pw">Kata sandi</label>
-    <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <h1 class="lname">Perintis</h1>
+    <label for="pw" class="sr">Kata sandi</label>
+    <input id="pw" type="password" placeholder="Kata sandi" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div id="loginErr" class="lerr" role="alert"></div>
     <button class="txt t-red" type="button" id="loginBtn">Masuk</button>
   </div>
@@ -318,9 +337,9 @@ document.getElementById('theme').addEventListener('click',()=>{
 const PASS="perintispp2026";
 function unlock(){document.body.classList.remove('locked');}
 function lock(){document.body.classList.add('locked');pw.focus();}
-try{if(sessionStorage.getItem('pp_auth')==='1')unlock();}catch(e){}
+try{sessionStorage.removeItem('pp_auth');}catch(e){}
 function tryLogin(){
-  if(pw.value.trim().toLowerCase()===PASS){try{sessionStorage.setItem('pp_auth','1');}catch(x){} pw.value='';loginErr.textContent='';unlock();}
+  if(pw.value.trim().toLowerCase()===PASS){pw.value='';loginErr.textContent='';unlock();}
   else{loginErr.textContent='Kata sandi salah. Coba lagi.';pw.select();}
 }
 loginBtn.addEventListener('click',tryLogin);
