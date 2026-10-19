@@ -208,7 +208,7 @@ body.locked .layout{display:none}
         <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Cari aplikasi..." aria-label="Cari aplikasi"></label>
         <span class="pill"><span class="dot"></span>Semua aktif</span>
         <button class="out" id="logout">Keluar</button>
-        <button class="theme" id="theme" aria-label="Ganti tema"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+        
       </div>
     </div>
 
@@ -260,6 +260,7 @@ const APPS = [
   {n:"Supervisor Cabang Gatsu", d:"Pantauan BPKB dan piutang cabang Gatsu.", g:"spv", pic:"Supervisor Cabang Gatsu", u:"https://bpkb-piutang-gatsu.vercel.app/", ic:"green"},
   {n:"Supervisor Flamboyan", d:"Pantauan BPKB dan piutang cabang Flamboyan.", g:"spv", pic:"Supervisor Flamboyan", u:"https://bpkb-piutang-flamboyan.vercel.app/", ic:"green"},
   {n:"Supervisor Cabang Gagak Hitam", d:"Pantauan BPKB dan piutang cabang Gagak Hitam.", g:"spv", pic:"Supervisor Cabang Gagak Hitam", u:"https://bpkb-piutang-gagak.vercel.app/", ic:"green"},
+  {n:"Tanda Terima STNK", d:"Pencatatan tanda terima STNK kendaraan.", g:"audit", pic:"Rudi (Internal Audit)", u:"https://tandaterimastnk.vercel.app/", ic:"red"},
   {n:"Kepala Bengkel Body Repair", d:"Dashboard material belum faktur Body Repair.", g:"bkl", pic:"Muhammad Rifai", u:"https://dashboardbp-seven.vercel.app/", ic:"blue"},
   {n:"Kepala Bengkel GR Flamboyan", d:"Dashboard material belum faktur GR Flamboyan.", g:"bkl", pic:"Hardi", u:"https://gr-flamboyan-pf.vercel.app/", ic:"blue"},
   {n:"Kepala Bengkel Adam Malik", d:"Dashboard material belum faktur GR Adam Malik.", g:"bkl", pic:"Muhammad Ridhowan", u:"https://adammalik.vercel.app/", ic:"blue"},
@@ -329,11 +330,7 @@ function copy(t){
   function fallback(){const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');}catch(e){}x.remove();done();}
 }
 
-document.getElementById('theme').addEventListener('click',()=>{
-  const r=document.documentElement;
-  const dark=r.dataset.theme==='dark';
-  r.dataset.theme=dark?'light':'dark';
-});
+
 const PASS="perintispp2026";
 function unlock(){document.body.classList.remove('locked');}
 function lock(){document.body.classList.add('locked');pw.focus();}
