@@ -1851,6 +1851,17 @@ function sha256hex(str) {
     if (window.__bootFu) window.__bootFu();
   }
   function el(id) { return document.getElementById(id); }
+  var NAMA_KATA_TERLARANG = ["bpkb", "gagak", "hitam", "gatsu", "flamboyan", "piutang", "followup", "follow", "up", "dashboard", "cabang", "cash", "leasing", "perintis", "perkasa", "test", "tes", "admin", "nama", "adam", "malik", "body", "repair", "otoxpert"];
+  function isNamaValid(nama) {
+    var kata = nama.trim().split(/\s+/).filter(function (w) { return w.length > 0; });
+    if (kata.length < 2) return false;
+    for (var i = 0; i < kata.length; i++) {
+      var w = kata[i];
+      if (!/^[A-Za-zÀ-ÿ'.-]{2,}$/.test(w)) return false;
+      if (NAMA_KATA_TERLARANG.indexOf(w.toLowerCase()) > -1) return false;
+    }
+    return true;
+  }
   function notifyLogin(nama, akses) {
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("GANTI_DENGAN_URL") === 0) return;
     try {
@@ -1868,6 +1879,11 @@ function sha256hex(str) {
     if (!nama) {
       el("lockErr").textContent = "Nama wajib diisi.";
       el("lockName").focus();
+      return;
+    }
+    if (!isNamaValid(nama)) {
+      el("lockErr").textContent = "Isi nama lengkap Anda (nama depan & belakang), bukan nama dashboard.";
+      el("lockName").select();
       return;
     }
     var hv = sha256hex(v);
