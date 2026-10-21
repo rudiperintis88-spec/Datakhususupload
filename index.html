@@ -234,6 +234,9 @@
     <p class="co">PT Perintis Perkasa, Medan</p>
     <h2>Gagak Hitam</h2>
     <div class="lock-field">
+      <input type="text" id="lockName" placeholder="Nama" autocomplete="off" aria-label="Nama" style="margin-bottom:8px">
+    </div>
+    <div class="lock-field">
       <input type="password" id="lockPw" placeholder="Password" autocomplete="off" aria-label="Password">
       <button class="lock-eye" id="lockEye" type="button" aria-label="Tampilkan password">
         <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1809,6 +1812,9 @@
 <script>
 (function () {
   var HASH_VIEW = "6d0eaa39f5188aecb9684bc9cc18fc7070cd5be1bae34db95d9360aeca1faa41", HASH_EXPORT = "448fca3dd7947d338e4b71ad687aee7dbb5a0b5d2ffc8fc3403a92006649a42f";
+  var CABANG_NAME = "Gagak Hitam";
+  // Ganti URL di bawah ini dengan Web App URL hasil deploy Google Apps Script (lihat panduan terpisah)
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzggGiQKV0_odLfKqXtshav6Sg7vrlgt85jegYPyy8jNRhNqEfvSK-Q8xPNsGHIZFFxWA/exec";
 
 function sha256hex(str) {
   var b = new TextEncoder().encode(str), l = b.length, K = [], H = [], p = [], c = 2, i, j;
@@ -1846,11 +1852,29 @@ function sha256hex(str) {
     if (window.__bootFu) window.__bootFu();
   }
   function el(id) { return document.getElementById(id); }
+  function notifyLogin(nama, akses) {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("GANTI_DENGAN_URL") === 0) return;
+    try {
+      fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ nama: nama, cabang: CABANG_NAME, akses: akses })
+      });
+    } catch (e) { /* abaikan kalau gagal kirim, jangan blokir login */ }
+  }
   function tryPw() {
+    var nama = el("lockName").value.trim();
     var v = el("lockPw").value.trim();
+    if (!nama) {
+      el("lockErr").textContent = "Nama wajib diisi.";
+      el("lockName").focus();
+      return;
+    }
     var hv = sha256hex(v);
     if (hv === HASH_EXPORT || hv === HASH_VIEW) {
       window.__canExport = hv === HASH_EXPORT;
+      notifyLogin(nama, window.__canExport ? "Bisa Export" : "Hanya Lihat");
       open();
     } else {
       el("lockErr").textContent = "Password salah.";
@@ -1866,7 +1890,8 @@ function sha256hex(str) {
   });
   el("lockBtn").addEventListener("click", tryPw);
   el("lockPw").addEventListener("keydown", function (e) { if (e.key === "Enter") tryPw(); });
-  el("lockPw").focus();
+  el("lockName").addEventListener("keydown", function (e) { if (e.key === "Enter") el("lockPw").focus(); });
+  el("lockName").focus();
 })();
 </script>
 </body>
